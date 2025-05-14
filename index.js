@@ -2,14 +2,16 @@ const express = require('express');
 const mysql = require('mysql2');
 const bcrypt = require('bcrypt');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-// JSON parser
+// Middleware
+app.use(cors());
 app.use(bodyParser.json());
 
-// MySQL ulanish — .env o‘rniga to‘g‘ridan-to‘g‘ri yozilgan
+// MySQL ulanish
 const db = mysql.createConnection({
     host: 'sql7.freesqldatabase.com',
     user: 'sql7778590',
@@ -27,11 +29,11 @@ db.connect((err) => {
     console.log('✅ MySQLga muvaffaqiyatli ulandi');
 });
 
-// ✅ Ro‘yxatdan o‘tish (POST /signup)
+// ✅ POST /signup — Ro‘yxatdan o‘tish
 app.post('/signup', async (req, res) => {
     const { username, email, password } = req.body;
     if (!username || !email || !password) {
-        return res.status(400).json({ message: 'Barcha maydonlar kerak' });
+        return res.status(400).json({ message: 'Barcha maydonlar to‘ldirilishi kerak' });
     }
 
     try {
@@ -43,16 +45,16 @@ app.post('/signup', async (req, res) => {
                 if (err.code === 'ER_DUP_ENTRY') {
                     return res.status(400).json({ message: 'Username yoki email allaqachon mavjud' });
                 }
-                return res.status(500).json({ message: 'Ma\'lumot saqlashda xatolik' });
+                return res.status(500).json({ message: 'Saqlashda xatolik' });
             }
-            res.status(201).json({ message: 'Foydalanuvchi ro‘yxatdan o‘tdi' });
+            res.status(201).json({ message: 'Foydalanuvchi muvaffaqiyatli ro‘yxatdan o‘tdi' });
         });
     } catch (err) {
         res.status(500).json({ message: 'Serverda xatolik yuz berdi' });
     }
 });
 
-// ✅ Login qilish (POST /login)
+// ✅ POST /login — Kirish
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
 
@@ -76,10 +78,19 @@ app.post('/login', (req, res) => {
             return res.status(401).json({ message: 'Parol noto‘g‘ri' });
         }
 
-        res.json({ message: 'Tizimga muvaffaqiyatli kirdingiz', user: { id: user.id, username: user.username } });
+        res.json({
+            message: 'Tizimga muvaffaqiyatli kirdingiz',
+            user: { id: user.id, username: user.username }
+        });
     });
 });
 
+// ✅ Test route — foydali bo‘ladi
+app.get('/', (req, res) => {
+    res.send('✅ JobHub server online ishlayapti!');
+});
+
+// 🔊 Serverni ishga tushirish
 app.listen(port, () => {
-    console.log(`🚀 Server ishlayapti: http://localhost:${port}`);
+    console.log(`🚀 Server online: http://localhost:${port}`);
 });
